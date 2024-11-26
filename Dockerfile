@@ -2,7 +2,6 @@
 FROM docker.io/snyk/snyk:linux@sha256:893db22bae8074744d869f585013d7d7e471531d1287d28ca2f54d356f9be44b as snyk
 FROM quay.io/enterprise-contract/ec-cli:snapshot@sha256:dc7d404596385e7d3c624ec0492524a1d57efe2b0c10cf0ec2158d49c0290a83 AS ec-cli
 FROM ghcr.io/sigstore/cosign/cosign:v99.99.91@sha256:8caf794491167c331776203c60b7c69d4ff24b4b4791eba348d8def0fd0cc343 as cosign-bin
-FROM quay.io/konflux-ci/yq@sha256:30b2b050a8e1f639a6da63c1a7951a8c95979e1d8ff198155f8df6c147cc7907 as yq-bin
 FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4-1227.1726694542
 
 # Note that the version of OPA used by pr-checks must be updated manually to reflect conftest updates
@@ -33,6 +32,7 @@ RUN curl -k -s -L https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.no
     ShellCheck \
     csmock-plugin-shellcheck-core \
     clamav-update && \
+    pip3 install --no-cache-dir yq && \
     curl -k -s -L https://github.com/CycloneDX/sbom-utility/releases/download/v"${sbom_utility_version}"/sbom-utility-v"${sbom_utility_version}"-linux-amd64.tar.gz --output sbom-utility.tar.gz && \
     mkdir sbom-utility && tar -xf sbom-utility.tar.gz -C sbom-utility && rm sbom-utility.tar.gz && \
     cd /usr/bin && \
@@ -58,7 +58,6 @@ COPY --from=ec-cli /usr/local/bin/ec /usr/local/bin/ec
 
 COPY --from=cosign-bin /ko-app/cosign /usr/local/bin/cosign
 
-COPY --from=yq-bin /usr/bin/yq /usr/local/bin/yq
 
 COPY policies $POLICY_PATH
 COPY test/conftest.sh $POLICY_PATH
